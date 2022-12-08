@@ -15,8 +15,10 @@ class Application
         var fileSystemItem = new FileSystemItem { Name = "/", IsDirectory = true };
         var lines = File.ReadLines("input.txt");
         fileSystemItem = WalkCommands(fileSystemItem, lines.ToList());
-        // Console.WriteLine(fileSystemItem.ChildItems[0].DirectorySize);
-        var x = 1;
+        fileSystemItem.DirectorySize = GetTotalBytes(fileSystemItem);
+        Console.WriteLine(GetTotalByteFromDirectoriesUnderThreshold(fileSystemItem, 100000));
+        var threshold = 30000000 - (70000000 - fileSystemItem.DirectorySize);
+        Console.WriteLine(GetDirectoriesOverThreshold(fileSystemItem, threshold).OrderBy(i => i).FirstOrDefault());
     }
 
     public FileSystemItem WalkCommands(FileSystemItem fileSystemItem, List<string> terminalOutputs)
@@ -63,6 +65,57 @@ class Application
         }
 
         return fileSystemItem;
+    }
+
+    private int GetTotalBytes(FileSystemItem item)
+    {
+        var total = 0;
+        foreach (var childItem in item.ChildItems)
+        {
+            if (childItem.IsDirectory)
+            {
+                childItem.DirectorySize = GetTotalBytes(childItem);
+                total += childItem.DirectorySize;
+            }
+            else
+            {
+                total += childItem.ItemSize;
+            }
+        }
+        return total;
+    }
+
+    private int GetTotalByteFromDirectoriesUnderThreshold(FileSystemItem item, int threshold)
+    {
+        var total = 0;
+        if (!item.IsDirectory)
+        {
+            return total;
+        }
+        foreach (var childItem in item.ChildItems)
+        {
+            if (childItem.DirectorySize <= threshold && childItem.IsDirectory)
+            {
+                total += childItem.DirectorySize;
+            }
+            total += GetTotalByteFromDirectoriesUnderThreshold(childItem, threshold);
+        }
+
+        return total;
+    }
+
+    private List<int> GetDirectoriesOverThreshold(FileSystemItem item, int threshold)
+    {
+        var list = new List<int>();
+        foreach (var childItem in item.ChildItems)
+        {
+            if (childItem.DirectorySize >= threshold && childItem.IsDirectory)
+            {
+                list.Add(childItem.DirectorySize);
+            }
+            list.AddRange(GetDirectoriesOverThreshold(childItem, threshold));
+        }
+        return list;
     }
 
 }
