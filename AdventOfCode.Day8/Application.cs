@@ -12,6 +12,7 @@ class Application
     public void Run()
     {
         Console.WriteLine(SumVisibleTrees());
+        var score = GetScenicScores();
     }
 
     private void InitializeData(string[] lines)
@@ -46,8 +47,6 @@ class Application
 
         return totalVisible;
     }
-
-    // validated
     public bool IsVisibleRight(int currentRow, int currentColumn)
     {
         var value = TreeData[currentRow, currentColumn];
@@ -61,7 +60,6 @@ class Application
         return row.All(r => r < value);
     }
 
-    // validated
     public bool IsVisibleLeft(int currentRow, int currentColumn)
     {
         var value = TreeData[currentRow, currentColumn];
@@ -74,7 +72,6 @@ class Application
         return row.All(r => r < value);
     }
 
-    // validated
     private bool IsVisibleDown(int currentRow, int currentColumn)
     {
         var value = TreeData[currentRow, currentColumn];
@@ -87,7 +84,6 @@ class Application
         return column.All(c => c < value);
     }
 
-    // in progress
     private bool IsVisibleUp(int currentRow, int currentColumn)
     {
         var value = TreeData[currentRow, currentColumn];
@@ -99,6 +95,57 @@ class Application
         }
 
         return column.All(c => c < value);
+    }
+
+    private List<int> GetScenicScores()
+    {
+        var scores = new List<int>();
+        var columnLength = TreeData.GetLength(0);
+        var rowLength = TreeData.GetLength(1);
+        for (int rowIndex = 0; rowIndex < TreeData.GetLength(0); rowIndex++)
+        {
+            var row = Enumerable.Range(0, rowLength).Select(x => TreeData[rowIndex, x]).ToList();
+            for (int columnIndex = 0; columnIndex < TreeData.GetLength(1); columnIndex++)
+            {
+                var column = Enumerable.Range(0, columnLength).Select(x => TreeData[x, columnIndex]);
+                var rightDistance = CalculateViewingDistanceRight(columnIndex, row);
+                var leftDistance = CalculateViewingDistanceLeft(columnIndex, row);
+                Console.WriteLine($"Right Distance: {rightDistance}");
+                Console.WriteLine($"Left Distance: {leftDistance}");
+            }
+        }
+        return scores;
+    }
+
+    private int CalculateViewingDistanceRight(int columnIndex, List<int> row)
+    {
+        var remainingRow = row.Skip(columnIndex + 1).ToList();
+        var index = 1;
+        foreach(var item in remainingRow)
+        {
+            if (remainingRow[index-1] >= row[columnIndex])
+            {
+                return index;
+            }
+            index++;
+        }
+        return index;
+    }
+
+    private int CalculateViewingDistanceLeft(int columnIndex, List<int> row)
+    {
+        var remainingRow = row.Take(columnIndex).ToList();
+        var value = row[columnIndex];
+        var index = 1;
+        for (int i = remainingRow.Count(); i > 0; i--)
+        {
+            if (remainingRow[i-1] >= value)
+            {
+                return index;
+            }
+            index++;
+        }
+        return index;
     }
 
 }
