@@ -13,6 +13,7 @@ class Application
     {
         Console.WriteLine(SumVisibleTrees());
         var score = GetScenicScores();
+        Console.WriteLine(score.OrderByDescending(x => x).First());
     }
 
     private void InitializeData(string[] lines)
@@ -107,12 +108,15 @@ class Application
             var row = Enumerable.Range(0, rowLength).Select(x => TreeData[rowIndex, x]).ToList();
             for (int columnIndex = 0; columnIndex < TreeData.GetLength(1); columnIndex++)
             {
-                var column = Enumerable.Range(0, columnLength).Select(x => TreeData[x, columnIndex]);
+                var column = Enumerable.Range(0, columnLength).Select(x => TreeData[x, columnIndex]).ToList();
                 var rightDistance = CalculateViewingDistanceRight(columnIndex, row);
                 var leftDistance = CalculateViewingDistanceLeft(columnIndex, row);
-                Console.WriteLine($"Right Distance: {rightDistance}");
-                Console.WriteLine($"Left Distance: {leftDistance}");
+                var upDistance = CalculateViewingDistanceUp(rowIndex, column);
+                var downDistance = CalculateViewingDistanceDown(rowIndex, column);
+                var score = rightDistance * leftDistance * upDistance * downDistance; 
+                scores.Add(score);
             }
+            // break;
         }
         return scores;
     }
@@ -120,10 +124,20 @@ class Application
     private int CalculateViewingDistanceRight(int columnIndex, List<int> row)
     {
         var remainingRow = row.Skip(columnIndex + 1).ToList();
-        var index = 1;
-        foreach(var item in remainingRow)
+        if (!remainingRow.Any())
         {
-            if (remainingRow[index-1] >= row[columnIndex])
+            return 0;
+        }
+        var currentTreeHeight = row[columnIndex];
+        return ProcessTreeHeights(currentTreeHeight, remainingRow);
+    }
+
+    private int ProcessTreeHeights(int currentTreeHeight, List<int> otherTreeHeights)
+    {
+        var index = 1;
+        foreach(var treeHeight in otherTreeHeights)
+        {
+            if (treeHeight >= currentTreeHeight)
             {
                 return index;
             }
@@ -134,18 +148,36 @@ class Application
 
     private int CalculateViewingDistanceLeft(int columnIndex, List<int> row)
     {
-        var remainingRow = row.Take(columnIndex).ToList();
-        var value = row[columnIndex];
-        var index = 1;
-        for (int i = remainingRow.Count(); i > 0; i--)
+        var remainingRow = row.Take(columnIndex).Reverse().ToList();
+        if (!remainingRow.Any())
         {
-            if (remainingRow[i-1] >= value)
-            {
-                return index;
-            }
-            index++;
+            return 0;
         }
-        return index;
+        var currentTreeHeight = row[columnIndex];
+        return ProcessTreeHeights(currentTreeHeight, remainingRow);
+    }
+
+    private int CalculateViewingDistanceUp(int rowIndex, List<int> column)
+    {
+        var remainingColumn = column.Take(rowIndex).Reverse().ToList();
+        if (!remainingColumn.Any())
+        {
+            return 0;
+        }
+        var currentTreeHeight = column[rowIndex];
+        return ProcessTreeHeights(currentTreeHeight, remainingColumn);
+    }
+
+
+    private int CalculateViewingDistanceDown(int rowIndex, List<int> column)
+    {
+        var remainingColumn = column.Skip(rowIndex + 1).ToList();
+        if (!remainingColumn.Any())
+        {
+            return 0;
+        }
+        var currentTreeHeight = column[rowIndex];
+        return ProcessTreeHeights(currentTreeHeight, remainingColumn);
     }
 
 }
